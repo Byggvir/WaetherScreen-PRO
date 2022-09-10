@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# Prepare downloaded files for import into MariaDB / MySQL database weatherstations
+
+DEBUG=OFF
+
+# Color for output
+
+red=$(tput setaf 1)
+green=$(tput setaf 2)
+blue=$(tput setaf 4)
+reset=$(tput sgr0)
+
+AWK="$(dirname $0)/awk"
+DAT="$(dirname $0)/../data"
+SED="$(dirname $0)/sed"
+SQL="$(dirname $0)/../SQL"
+TMP=$(mktemp -d)
+TMP="/tmp"
+
+if [ -n "$1" ]
+then
+    STATION=$1
+else
+    STATION=1
+fi
+
+#
+# Import station data from CSV files names <YYYY><MM>A.CSV
+#
+
+function station {
+
+    rm "${TMP}/WeatherScreenStationReports.csv" 2>/dev/null
+
+    for F in ${DAT}//${STATION}/*A.CSV
+    do
+        
+        FILENAME=$(basename "$F")
+        
+        if [ "${#FILENAME}" -eq 11 ]
+        then
+            echo $F
+            sed -f "${SED}/station.sed" "${F}" \
+            | sed 's#^#'${STATION}',#;' \
+            >> "${TMP}/WeatherScreenStationReports.csv"
+        fi
+    
+done
+
+}
+
+function sensoren {
+
+    rm "${TMP}/WeatherScreenSensorReports.csv" 2>/dev/null
+
+    for F in ${DAT}/${STATION}/*Allsensors_A.CSV
+    do
+    
+        echo $F
+        sed -f "${SED}/sensor.sed" "${F}" \
+        | awk -F ',' -f "${AWK}/sensor.awk" \
+        | sed 's#^#'${STATION}',#;' \
+        >> "${TMP}/WeatherScreenSensorReports.csv"
+    
+    done
+}
+
+  
+    station
+    sensoren
+ 
