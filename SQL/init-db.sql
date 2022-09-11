@@ -87,6 +87,7 @@ CREATE TABLE `sensorreports` (
 INSERT INTO `devices` VALUES (1, 'WeatherScreen PRO', 'Mittelerde', 'Zingsheimstraße 31, 53359 Rheinbach', 50.6209, 6.9616);
 
 INSERT INTO `sensors` VALUES (1 , 2, 'Schlafzimmer', 'DNT000005') ;
+INSERT INTO `sensors` VALUES (1 , 3, 'Arbeitszimmer', 'DNT000005') ;
 INSERT INTO `sensors` VALUES (1 , 4, 'Daniel', 'DNT000005') ;
 INSERT INTO `sensors` VALUES (1 , 5, 'Stephan', 'DNT000005') ;
 INSERT INTO `sensors` VALUES (1 , 8, 'Wintergarten', 'DNT000005') ;
