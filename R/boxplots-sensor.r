@@ -62,7 +62,6 @@ heute <- format(today, "%Y%m%d")
 SQL <- paste( 'select * from devices;')
 Devices <- RunSQL(SQL)
 
-
 for ( D in 1:nrow(Devices)) {
  
   

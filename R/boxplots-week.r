@@ -53,7 +53,7 @@ source("lib/sql.r")
 
 # Set output directory for diagrams
 
-outdir <- '../png/boxplots/Jahre/'
+outdir <- '../png/boxplots/Wochen/'
 dir.create( outdir , showWarnings = FALSE, recursive = FALSE, mode = "0777")
 
 today <- Sys.Date()
@@ -62,50 +62,58 @@ heute <- format(today, "%Y%m%d")
 SQL <- paste( 'select * from devices;')
 Devices <- RunSQL(SQL)
 
+SQL <- paste( 
+  'select * from sensorreports;'
+)
+
+SensorReports <- RunSQL(SQL)
+
+# Jahr
+
+J <- year(SensorReports$dateutc)
+JJ <- unique(J)
+
+# Year of calendarweek
+
+isoJ <- isoyear(SensorReports$dateutc)
+isoJJ <- unique(isoJ)
+
+# Factor dateutc
+
+SensorReports$Jahre <- factor( J, levels = JJ, labels = JJ)
+SensorReports$Monate <- factor( month(SensorReports$dateutc), levels = 1:12, labels = Monatsnamen)
+
+SensorReports$KwJahre <- factor( isoJ, levels = isoJJ, labels = isoJJ)
+SensorReports$Kw <- factor( isoweek(SensorReports$dateutc), levels = 1:53, labels = paste('Kw', 1:53))
+
+SensorReports$Tag <- factor( yday(SensorReports$dateutc), levels = 1:366, labels = 1:366 )
+
+
 for ( D in 1:nrow(Devices)) {
-  
   
   DevName = Devices$name[D] 
   DevId = Devices$id[D]
+
+  SQLsensor <- paste('select * from sensors as S join devices as D on S.device_id = D.id where D.id = ', D, ';')
+  Sensors <- RunSQL(SQLsensor)
   
-  SQL <- paste( 
-    'select R.*,S.sensorlocation as sensorlocation  from sensorreports as R join sensors as S on S.device_id = R.device_id and S.channel = R.channel where R.device_id *', DevId, ';'
-  )
-  
-  SensorReports <- RunSQL(SQL)
-  
-  # Jahr
-  
-  J <- year(SensorReports$dateutc)
-  JJ <- unique(J)
-  
-  # Year of calendarweek
-  
-  isoJ <- isoyear(SensorReports$dateutc)
-  isoJJ <- unique(isoJ)
-  
-  # Factor dateutc
-  
-  SensorReports$Jahre <- factor( J, levels = JJ, labels = JJ)
-  SensorReports$Monate <- factor( month(SensorReports$dateutc), levels = 1:12, labels = Monatsnamen)
-  
-  SensorReports$KwJahre <- factor( isoJ, levels = isoJJ, labels = isoJJ)
-  SensorReports$Kw <- factor( isoweek(SensorReports$dateutc), levels = 1:53, labels = paste('Kw', 1:53))
-  
-  SensorReports$Tag <- factor( yday(SensorReports$dateutc), levels = 1:366, labels = 1:366 )
-  
-  L <- SensorReports
-  scl <- max(L$Temperature) / max(L$Humidity)
+  for ( C in 1:nrow(Sensors) ) {
+    
+    Chan <- Sensors$channel[C]
+    SenLocation <- Sensors$sensorlocation[C]
+    
+    L <- SensorReports %>% filter ( channel == Chan & device_id == DevId )
+    scl <- max(L$Temperature) / max(L$Humidity)
   
     L %>% ggplot() + 
-      geom_boxplot( aes( x = Jahre , y = Temperature, fill = sensorlocation ) , size = 0.1 ) +
+      geom_boxplot( aes( x = Kw , y = Temperature, fill = KwJahre ) , size = 0.1 ) +
       scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE )) +
       expand_limits( y = 15) +
       expand_limits( y = 30) +
       theme_ipsum() +
       theme(  legend.position="right"
               , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1) ) +
-      labs( title = paste( 'Messwerte der Sensoren an Station', DevName )
+      labs( title = paste( 'Messwerte des Sensors', SenLocation ,'an Station', DevName )
             , subtitle = 'Temperatur'
             , x = "Datum/Zeit"
             , y = "Temperatur [°C]"
@@ -114,7 +122,7 @@ for ( D in 1:nrow(Devices)) {
       ) -> P
   
     ggsave(   
-      file = paste( outdir, 'Temperature-',  DevName, '.png', sep='')
+      file = paste( outdir, 'Temperature-',  DevName, '-', SenLocation, '.png', sep='')
       , plot = P
       , device = 'png'
       , bg = "white"
@@ -125,23 +133,23 @@ for ( D in 1:nrow(Devices)) {
     )
 
     L %>% ggplot() + 
-      geom_boxplot( aes( x = Jahre , y = Humidity, fill = sensorlocation ) , size = 0.1 ) +
+      geom_boxplot( aes( x = Kw , y = Humidity, fill = KwJahre ) , size = 0.1 ) +
       scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE )) +
-      expand_limits( y = 0) +
-      expand_limits( y = 100) +
+      expand_limits( y = 15) +
+      expand_limits( y = 30) +
       theme_ipsum() +
       theme(  legend.position="right"
               , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1) ) +
-      labs( title = paste( 'Messwerte der Sensoren an Station', DevName )
+      labs( title = paste( 'Messwerte des Sensors', SenLocation ,'an Station', DevName )
             , subtitle = 'Luftfeuchtigkeit'
             , x = "Datum/Zeit"
             , y = "Luftfeuchtigkeit [%]"
-            , colour = 'Sensor'
+            , colour = 'Jahr'
             , caption = paste( "Stand:", heute )
       ) -> P
   
     ggsave(   
-      file = paste( outdir, 'Humidity-', DevName, '.png', sep='')
+      file = paste( outdir, 'Humidity-', DevName,'-', SenLocation, '.png', sep='')
       , plot = P
       , device = 'png'
       , bg = "white"
@@ -150,5 +158,7 @@ for ( D in 1:nrow(Devices)) {
       , units = "px"
       , dpi = 144
     )
-
+    
+  } # end SensorReports
+  
 } # end devices
