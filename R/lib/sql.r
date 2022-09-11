@@ -53,3 +53,66 @@ ExecSQL <- function (
   return (count)
   
 }
+
+
+# 
+# Function to get a list of devices
+#  
+
+GetDevices  <- function () {
+  
+  SQL <- paste( 'select * from devices;')
+  return(RunSQL(SQL))
+  
+}
+
+# 
+# Function to get a list of sensors of a device
+#  
+
+GetSensors  <- function ( DevId = 1) {
+  
+  SQL <- paste( 'select * from devices as D join sensors as S on D.id = S.device_id where D.id =', DevId, ';')
+  return(RunSQL(SQL))
+  
+}
+
+# 
+# Function to get the measured data of all sensors at a device
+#  
+
+GetReports  <- function ( DevId = 1, Channel = 0) {
+  
+  if (Channel == 0) {
+    SQL <- paste( 
+      'select R.*,S.sensorlocation as Sensor  from sensorreports as R join sensors as S on S.device_id = R.device_id and S.channel = R.channel where R.device_id =', DevId, ';'
+    )
+  } else {
+    SQL <- paste( 
+      'select R.*,S.sensorlocation as Sensor  from sensorreports as R join sensors as S on S.device_id = R.device_id and S.channel = R.channel where R.device_id =', DevId, 'and S.channel =',Channel,';'
+    )
+    
+  }
+  
+  R <- RunSQL(SQL)
+  
+  # Add factor for year, month, isoyear, isoweek
+  
+  Y <- year(R$dateutc)
+  YY <- unique(Y)
+  
+  isoY<- isoyear(R$dateutc)
+  isoYY <- unique(isoY)
+  
+  R$Year <- factor( Y, levels = YY, labels = YY)
+  R$Month <- factor( month(R$dateutc), levels = 1:12, labels = Monatsnamen)
+  
+  R$ISOYear <- factor( isoY, levels = isoYY, labels = isoYY)
+  R$ISOWeek <- factor( isoweek(R$dateutc), levels = 1:53, labels = paste('Week', 1:53))
+  
+  R$Day <- factor( yday(R$dateutc), levels = 1:366, labels = 1:366 )
+  
+  return(R)
+  
+}
+

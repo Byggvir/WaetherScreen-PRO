@@ -8,7 +8,7 @@
 # E-Mail: thomas@arend-rhb.de
 #
 
-MyScriptName <- "datalogger"
+MyScriptName <- "boxplots-week"
 
 options(OutDec=',')
 
@@ -59,54 +59,26 @@ dir.create( outdir , showWarnings = FALSE, recursive = FALSE, mode = "0777")
 today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
 
-SQL <- paste( 'select * from devices;')
-Devices <- RunSQL(SQL)
-
-SQL <- paste( 
-  'select * from sensorreports;'
-)
-
-SensorReports <- RunSQL(SQL)
-
-# Jahr
-
-J <- year(SensorReports$dateutc)
-JJ <- unique(J)
-
-# Year of calendarweek
-
-isoJ <- isoyear(SensorReports$dateutc)
-isoJJ <- unique(isoJ)
-
-# Factor dateutc
-
-SensorReports$Jahre <- factor( J, levels = JJ, labels = JJ)
-SensorReports$Monate <- factor( month(SensorReports$dateutc), levels = 1:12, labels = Monatsnamen)
-
-SensorReports$KwJahre <- factor( isoJ, levels = isoJJ, labels = isoJJ)
-SensorReports$Kw <- factor( isoweek(SensorReports$dateutc), levels = 1:53, labels = paste('Kw', 1:53))
-
-SensorReports$Tag <- factor( yday(SensorReports$dateutc), levels = 1:366, labels = 1:366 )
-
+Devices <- GetDevices()
 
 for ( D in 1:nrow(Devices)) {
   
   DevName = Devices$name[D] 
   DevId = Devices$id[D]
 
-  SQLsensor <- paste('select * from sensors as S join devices as D on S.device_id = D.id where D.id = ', D, ';')
-  Sensors <- RunSQL(SQLsensor)
+  Sensors <- GetSensors(DevId = D)
   
   for ( C in 1:nrow(Sensors) ) {
     
     Chan <- Sensors$channel[C]
     SenLocation <- Sensors$sensorlocation[C]
     
-    L <- SensorReports %>% filter ( channel == Chan & device_id == DevId )
-    scl <- max(L$Temperature) / max(L$Humidity)
+    SensorReports <- GetReports( DevId = DevId, Channel =  Chan)
+    
+    scl <- max( SensorReports$Temperature) / max( SensorReports$Humidity)
   
-    L %>% ggplot() + 
-      geom_boxplot( aes( x = Kw , y = Temperature, fill = KwJahre ) , size = 0.1 ) +
+    SensorReports %>% ggplot() + 
+      geom_boxplot( aes( x = ISOWeek, y = Temperature, fill = ISOYear ) , size = 0.1 ) +
       scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE )) +
       expand_limits( y = 15) +
       expand_limits( y = 30) +
@@ -132,11 +104,11 @@ for ( D in 1:nrow(Devices)) {
       , dpi = 144
     )
 
-    L %>% ggplot() + 
-      geom_boxplot( aes( x = Kw , y = Humidity, fill = KwJahre ) , size = 0.1 ) +
-      scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE )) +
-      expand_limits( y = 15) +
-      expand_limits( y = 30) +
+    SensorReports %>% ggplot() + 
+      geom_boxplot( aes( x = ISOWeek , y = Humidity / 100, fill = ISOYear ) , size = 0.1 ) +
+      scale_y_continuous( labels = scales::percent ) +
+      expand_limits( y = 0 ) +
+      expand_limits( y = 1 ) +
       theme_ipsum() +
       theme(  legend.position="right"
               , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1) ) +

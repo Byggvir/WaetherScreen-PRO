@@ -61,7 +61,7 @@ today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
 
 SQL <- paste( 
-    'select R.dateutc , date(R.dateutc) as Datum, R.channel, S.sensorlocation, R.Temperature from sensorreports as R join sensor as S on S.channel = R.channel and S.station_id = R.station_id;'
+    'select R.dateutc , date(R.dateutc) as Datum, R.channel, S.sensorlocation, R.Temperature from sensorreports as R join sensors as S on S.channel = R.channel and S.device_id = R.device_id;'
 )
 
 CS <- RunSQL(SQL)
