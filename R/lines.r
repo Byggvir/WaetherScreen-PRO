@@ -60,32 +60,36 @@ dir.create( outdir , showWarnings = FALSE, recursive = FALSE, mode = "0777")
 today <- Sys.Date()
 heute <- format(today, "%Y%m%d")
 
-SQL <- paste( 
-    'select * from reports;'
-)
+Devices <- GetDevices()
 
-RoomLogg <- RunSQL(SQL)
-
-for ( id in unique(RoomLogg$sensor_id) ) {
+for ( D in 1:nrow(Devices)) {
   
-  SQLsensor <- paste('select * from sensor as S join logger as L on S.logger_id = L.id where S.id = ', id, ';')
-  SensorInfo <- RunSQL(SQLsensor)
-
-  L <- RoomLogg %>% filter ( sensor_id == id )
-  scl <- max(L$Temperature) / max(L$Humidity)
+  DevName = Devices$name[D] 
+  DevId = Devices$id[D]
   
-  L %>% ggplot() + 
-    geom_line( aes( x = dateutc, y = Temperature, colour = 'Temperatur' ) , size = 1 ) +
-    geom_line( aes( x = dateutc, y = Humidity * scl, colour = 'Luftfeuchte' ) , size = 1 ) +
-    scale_x_datetime() + # ( breaks = '1 hour' ) + 
-    scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ),
-                        sec.axis = sec_axis( ~. / scl, name = "Luftfeuchte"
-                                             , labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ))) +
-    # expand_limits( y = 0) +
+  Sensors <- GetSensors(DevId = D)
+  
+  for ( C in 1:nrow(Sensors) ) {
+    
+    Chan <- Sensors$channel[C]
+    SenLocation <- Sensors$sensorlocation[C]
+    
+    SensorReports <- GetReports( DevId = DevId, Channel =  Chan)
+    
+    scl <- max( SensorReports$Temperature) / max(SensorReports$Humidity / 100)
+  
+    SensorReports %>% ggplot() + 
+      geom_line( aes( x = dateutc, y = Temperature, colour = 'Temperatur' ) , size = 1 ) +
+      geom_line( aes( x = dateutc, y = Humidity * scl / 100 , colour = 'Luftfeuchte' ) , size = 1 ) +
+      scale_x_datetime() + # ( breaks = '1 hour' ) + 
+      scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ),
+                          sec.axis = sec_axis( ~. / scl, name = "Luftfeuchte"
+                                             , labels = scales::percent )) +
+      # expand_limits( y = 0) +
     theme_ipsum() +
     theme(  legend.position="right"
             , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1) ) +
-    labs( title = paste( 'RoomLogg Sensor:', SensorInfo$name[1],'-', SensorInfo$sensorlocation )
+    labs( title = paste( 'Sensor:', SenLocation ,'an Station', DevName )
           , subtitle = 'Temperatur und Luftfeuchte'
           , x = "Datum/Zeit"
           , y = "Temperatur [°C]"
@@ -94,7 +98,7 @@ for ( id in unique(RoomLogg$sensor_id) ) {
     ) -> P
 
   ggsave(   
-    file = paste( outdir, id, '.png', sep='')
+    file = paste( outdir, DevName, '-', SenLocation, '.png', sep='')
     , plot = P
     , device = 'png'
     , bg = "white"
@@ -103,5 +107,7 @@ for ( id in unique(RoomLogg$sensor_id) ) {
     , units = "px"
     , dpi = 144
   )
-
-}
+  
+  } # end sensors
+  
+} # end devices
