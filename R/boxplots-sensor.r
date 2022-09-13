@@ -97,7 +97,7 @@ for ( D in 1:nrow(Devices)) {
       , dpi = 144
     )
 
-    L %>% ggplot() + 
+    SensorReports %>% ggplot() + 
       geom_boxplot( aes( x = Month , y = Humidity, fill = Sensor ) , size = 0.1 ) +
       scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE )) +
       expand_limits( y = 15) +
