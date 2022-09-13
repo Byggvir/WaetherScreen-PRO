@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 #
 #
-# Script: boxplots.r
+# Script: lines.r
 #
 # Stand: 2022-09-07
 # (c) 2022 by Thomas Arend, Rheinbach
@@ -73,10 +73,11 @@ for ( D in 1:nrow(Devices)) {
     
     Chan <- Sensors$channel[C]
     SenLocation <- Sensors$sensorlocation[C]
+    print(c(Chan,SenLocation))
     
     SensorReports <- GetReports( DevId = DevId, Channel =  Chan)
     
-    scl <- max( SensorReports$Temperature) / max(SensorReports$Humidity / 100)
+    scl <- max( SensorReports$Temperature)# / max(SensorReports$Humidity / 100)
   
     SensorReports %>% ggplot() + 
       geom_line( aes( x = dateutc, y = Temperature, colour = 'Temperatur' ) , size = 1 ) +
@@ -85,7 +86,8 @@ for ( D in 1:nrow(Devices)) {
       scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE ),
                           sec.axis = sec_axis( ~. / scl, name = "Luftfeuchte"
                                              , labels = scales::percent )) +
-      # expand_limits( y = 0) +
+      scale_color_manual(values=c('blue','red')) +
+      expand_limits( y = 0) +
     theme_ipsum() +
     theme(  legend.position="right"
             , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1) ) +
