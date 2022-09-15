@@ -68,60 +68,65 @@ for ( D in 1:nrow(Devices)) {
   DevId = Devices$id[D]
   
   SensorReports <- GetReports(DevId = DevId)
-  scl <- max(SensorReports$Temperature) / max(SensorReports$Humidity)
-  
-  SensorReports %>% ggplot() + 
-      geom_boxplot( aes( x = Month , y = Temperature, fill = Sensor ) , size = 0.1 ) +
-      scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE )) +
-      expand_limits( y = 15) +
-      expand_limits( y = 30) +
-      theme_ipsum() +
-      theme(  legend.position="right"
-              , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1) ) +
-      labs( title = paste( 'Messwerte der Sensoren an Station', DevName )
-            , subtitle = 'Temperatur'
-            , x = "Datum/Zeit"
-            , y = "Temperatur [°C]"
-            , colour = 'Sensor'
-            , caption = paste( "Stand:", heute )
-      ) -> P
-  
-    ggsave(   
-      file = paste( outdir, 'Temperature-',  DevName, '.png', sep='')
-      , plot = P
-      , device = 'png'
-      , bg = "white"
-      , width = 1920
-      , height = 1080
-      , units = "px"
-      , dpi = 144
-    )
-
-    SensorReports %>% ggplot() + 
-      geom_boxplot( aes( x = Month , y = Humidity, fill = Sensor ) , size = 0.1 ) +
-      scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE )) +
-      expand_limits( y = 15) +
-      expand_limits( y = 30) +
-      theme_ipsum() +
-      theme(  legend.position="right"
-              , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1) ) +
-      labs( title = paste( 'Messwerte der Sensoren an Station', DevName )
-            , subtitle = 'Luftfeuchtigkeit'
-            , x = "Datum/Zeit"
-            , y = "Luftfeuchtigkeit [%]"
-            , colour = 'Sensor'
-            , caption = paste( "Stand:", heute )
-      ) -> P
-  
-    ggsave(   
-      file = paste( outdir, 'Humidity-', DevName, '.png', sep='')
-      , plot = P
-      , device = 'png'
-      , bg = "white"
-      , width = 1920
-      , height = 1080
-      , units = "px"
-      , dpi = 144
-    )
+  if (nrow(SensorReports) > 0 ) {
+    scl <- max(SensorReports$Temperature) / max(SensorReports$Humidity)
     
+    SensorReports %>% ggplot() + 
+        geom_boxplot( aes( x = Month , y = Temperature, fill = Sensor ) , size = 0.1 ) +
+        scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE )) +
+        expand_limits( y = 15) +
+        expand_limits( y = 30) +
+        theme_ipsum() +
+        theme(  legend.position="right"
+                , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1) ) +
+        labs( title = paste( 'Messwerte der Sensoren an Station', DevName )
+              , subtitle = 'Temperatur'
+              , x = "Datum/Zeit"
+              , y = "Temperatur [°C]"
+              , colour = 'Sensor'
+              , caption = paste( "Stand:", heute )
+        ) -> P
+    
+      ggsave(   
+        file = paste( outdir, 'Temperature-',  DevName, '.png', sep='')
+        , plot = P
+        , device = 'png'
+        , bg = "white"
+        , width = 1920
+        , height = 1080
+        , units = "px"
+        , dpi = 144
+      )
+  
+      SensorReports %>% ggplot() + 
+        geom_boxplot( aes( x = Month , y = Humidity, fill = Sensor ) , size = 0.1 ) +
+        scale_y_continuous( labels = function (x) format(x, big.mark = ".", decimal.mark= ',', scientific = FALSE )) +
+        expand_limits( y = 15) +
+        expand_limits( y = 30) +
+        theme_ipsum() +
+        theme(  legend.position="right"
+                , axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1) ) +
+        labs( title = paste( 'Messwerte der Sensoren an Station', DevName )
+              , subtitle = 'Luftfeuchtigkeit'
+              , x = "Datum/Zeit"
+              , y = "Luftfeuchtigkeit [%]"
+              , colour = 'Sensor'
+              , caption = paste( "Stand:", heute )
+        ) -> P
+    
+      ggsave(   
+        file = paste( outdir, 'Humidity-', DevName, '.png', sep='')
+        , plot = P
+        , device = 'png'
+        , bg = "white"
+        , width = 1920
+        , height = 1080
+        , units = "px"
+        , dpi = 144
+      )
+  }
+  else {
+    print(paste('Fehler:', DevId))
+  }
+  
 } # end devices

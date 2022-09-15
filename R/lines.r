@@ -73,8 +73,7 @@ for ( D in 1:nrow(Devices)) {
     
     Chan <- Sensors$channel[C]
     SenLocation <- Sensors$sensorlocation[C]
-    print(c(Chan,SenLocation))
-    
+
     SensorReports <- GetReports( DevId = DevId, Channel =  Chan)
     
     scl <- max( SensorReports$Temperature)# / max(SensorReports$Humidity / 100)

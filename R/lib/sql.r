@@ -116,3 +116,31 @@ GetReports  <- function ( DevId = 1, Channel = 0) {
   
 }
 
+GetDeviceReports  <- function ( DevId = 1) {
+  
+  SQL <- paste( 
+    'select R.* from devicereports as R join devices as D on D.id = R.device_id where R.device_id =', DevId, ';'
+  )
+
+  R <- RunSQL(SQL)
+  
+  # Add factor for year, month, isoyear, isoweek
+  
+  Y <- year(R$dateutc)
+  YY <- unique(Y)
+  
+  isoY<- isoyear(R$dateutc)
+  isoYY <- unique(isoY)
+  
+  R$Year <- factor( Y, levels = YY, labels = YY)
+  R$Month <- factor( month(R$dateutc), levels = 1:12, labels = Monatsnamen)
+  
+  R$ISOYear <- factor( isoY, levels = isoYY, labels = isoYY)
+  R$ISOWeek <- factor( isoweek(R$dateutc), levels = 1:53, labels = paste('Week', 1:53))
+  
+  R$Day <- factor( yday(R$dateutc), levels = 1:366, labels = 1:366 )
+  
+  return(R)
+  
+}
+

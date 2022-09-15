@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 #
 #
-# Script: boxplots.r
+# Script: boxplots-year.r
 #
 # Stand: 2022-09-07
 # (c) 2022 by Thomas Arend, Rheinbach
